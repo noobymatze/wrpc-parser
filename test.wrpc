@@ -1,0 +1,162 @@
+// Represents a Date without any timezone information.
+data Date {
+    day: Int32,
+    month: Int32,
+    year: Int32,
+}
+
+// Represents a DateTime without any timezone information.
+data DateTime {
+    day: Int32,
+    month: Int32,
+    year: Int32,
+    hour: Int64,
+    minute: Int64,
+    seconds: Int64,
+}
+
+// An *Association* is an overarching organisation in the German
+// floorball landscape. They organize
+data Association {
+    id: Int64,
+    //#(check (not blank))
+    name: String,
+    createdAt: DateTime,
+    updatedAt: DateTime,
+}
+
+// Represents data, that is used to insert and update
+// an [Association](#Association).
+data AssociationData {
+    #(check (not (blank .name)))
+    name: String?,
+}
+
+data Person {
+    name: String,
+    age: Int32,
+    association: Association,
+}
+
+// The *AssociationService* manages associations and their data.
+service AssociationService {
+
+    #(example {:id 1 :name "Test" :createdAt "..."})
+    #(test (get :id (insert example) example))
+    def get(id: Int64): Association?
+
+    def addPerson(person: Person): Association?
+
+    def insert(data: AssociationData): Result<Error, Association>
+
+    def update(data: AssociationData): Result<Error, Association>
+
+    def delete(id: Int64)
+
+}
+
+
+// A *Club* is a club, that belongs to an [Association](#Association).
+//
+// It can be a club in
+data Club {
+    id: Int64,
+    name: String,
+    shortName: String,
+    association: Association,
+    createdAt: DateTime,
+    updatedAt: DateTime,
+}
+
+data Address {
+
+    postleitzahl: String,
+    // DE oder CH
+    land: String
+}
+
+data ClubData {
+    name: String?,
+    shortName: String?,
+}
+
+// A *Season* represents a year in the sport of floorball. A referee
+// only has a
+data Season {
+    start: Date,
+    start_registration: DateTime,
+    end_registration: DateTime,
+}
+
+// This is an error, that will happen
+enum Error {
+    // More stuff!
+    Hello { name: String, foo: Int32 },
+    Foo { name: String, },
+}
+
+// Represents login credentials for a specific user.
+data Credentials {
+    username: String,
+    password: String,
+}
+
+// A *Role* represents the role a user can have when
+// navigating the nordref application.
+//
+// - *SuperAdmin*: Means a user can do everything in the system, even on behalf of another user.
+// - *Admin*: Means a user can do everything a SuperAdmin can do, except deleting.
+// - *ClubAdmin*: Means a user can manage the users, registrations and data of their club.
+// - *Referee*: Means someone who is a referee and wants to register for Courses.
+// - *User*: Just a user.
+enum Role {
+    SuperAdmin,
+    Admin,
+    ClubAdmin,
+    Referee,
+    User,
+}
+
+data Session {
+    id: SessionId,
+    role: Role,
+}
+
+data SessionId {
+    id: String
+}
+
+// The [SessionService] manages sessions and allows a
+// user to login.
+service SessionService {
+
+    // Signs in a user based on the given [Credentials](#Credentials).
+    def login(credentials: Credentials): Greet
+
+    // Sign out the given session via the given SessionId.
+    def logout(session: SessionId): Result<Error, Greet>
+
+}
+
+// The *ClubService* manages clubs and their data.
+service ClubService {
+
+    // Returns a [Club](#Club) based on the given id.
+    //
+    // If the club does not exist, will return `null`.
+    def get(id: Int64): Club?
+
+    // Insert a new [Club](#Club) into the database and
+    // return the stored
+    def insert(data: ClubData): Result<Error, Club>
+
+    def update(data: ClubData): Result<Error, Club>
+
+    def delete(id: Int64)
+
+}
+
+enum Result<E, T> {
+    Ok { value: T },
+    Err { value: E },
+}
